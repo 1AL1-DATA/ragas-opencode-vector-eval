@@ -1,0 +1,10 @@
+metric,label,pearson,pearson_p,spearman,spearman_p,verdict
+faithfulness,Faithfulness (NLI),-0.1733,0.08953,-0.1846,0.0703,WEAK
+answer_relevancy,AnswerRelevancy (TAS-B),0.5555,2.394e-09,0.5762,4.358e-10,MODERATE
+answer_relevancy_nomic,AnswerRelevancy (nomic),0.7773,3.084e-21,0.7089,2.206e-16,STRONG
+context_precision,ContextPrecision (bge),-0.0002,0.9982,-0.1236,0.2231,WEAK
+context_precision_reranked,ContextPrecision (bge reranked),0.0271,0.7899,-0.0436,0.6685,WEAK
+context_precision_minilm,ContextPrecision (MiniLM),-0.0395,0.6981,-0.0183,0.8574,WEAK
+answer_correctness,AnswerCorrectness (combined),0.8218,6.062e-25,0.8944,5.743e-35,STRONG
+answer_correctness_rouge,AnswerCorrectness (ROUGE),0.7884,9.338e-22,0.8696,7.153e-31,STRONG
+answer_correctness_sem,AnswerCorrectness (nomic),0.7754,1.123e-20,0.8746,1.26e-31,STRONG

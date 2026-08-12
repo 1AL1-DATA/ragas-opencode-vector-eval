@@ -1,0 +1,232 @@
+% arxiv_paper.tex
+% Compile with: xelatex arxiv_paper.tex  (TinyTeX)
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\title{Cheap Deterministic Shortcuts vs.\ LLM-as-a-Judge Metrics:\\An Agreement Study on a Real Agentic-RAG Memory Store}
+\author{Alkiviadis (Adi) Lazaridis\\\small \texttt{https://github.com/1AL1-DATA}}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+LLM-as-a-judge is the default method for evaluating retrieval-augmented
+generation (RAG) systems, but it is slow, non-deterministic, and expensive.
+We measure how well cheap, deterministic shortcuts---built from embeddings,
+cross-encoders, natural language inference, and lexical overlap---predict the
+rankings of four RAGAS judge metrics on a production-shaped corpus: the full
+session store of an agentic coding tool mirrored into a local vector database.
+Over 99 joined samples, AnswerCorrectness is strongly predicted by a
+ROUGE-L plus embedding-cosine blend (Spearman $\rho=0.89$), and
+AnswerRelevancy by query/document cosine using the index's own embedding
+family ($\rho=0.71$). Faithfulness agreement is weakly negative
+($\rho=-0.18$): the judge saturates at a median of 1.000 while a sentence-level
+NLI shortcut reads a median of 0.000. ContextPrecision shows no
+discriminative signal on this corpus ($|\rho|<0.13$ across all variants).
+We conclude that shortcut-versus-judge agreement is a fast, actionable
+diagnostic: it identifies which judge metrics can be replaced by deterministic
+scores for ranking, and which judge metrics themselves require an oracle audit.
+\end{abstract}
+
+\section{Introduction}\label{sec:intro}
+
+Retrieval-augmented generation (RAG) is evaluated predominantly through
+LLM-as-a-judge frameworks such as RAGAS~\cite{es2023ragas}. These metrics
+require a capable judge model, are non-deterministic, and take hours to run
+on realistic datasets with local models. Teams that iterate on retrieval
+pipelines need cheaper, deterministic signals for regression gates and
+system tuning.
+
+In this work we ask an operational question: \emph{on a given corpus, which
+RAGAS judge metric can be predicted by which cheap shortcut, and which judge
+metrics are themselves unreliable?} Rather than a synthetic benchmark, we
+evaluate on the session history of an agentic coding assistant---thousands of
+real conversations---mirrored into a local vector database. Queries are
+genuine user messages, responses are fresh generations conditioned on
+retrieved chunks, and references are the historical assistant replies.
+
+\section{System under evaluation}\label{sec:system}
+
+The retrieval system is a derived vector index of a SQLite session store.
+Messages are extracted from materialized tables into a JSONL corpus, chunked
+to roughly 1400 characters with overlap, embedded with
+\texttt{nomic-embed-text} (768-dimensional, cosine), and stored in a Chroma
+collection. Retrieval is top-$k$ cosine search ($k=5$); a local generator
+(\texttt{gemma4:12b}, temperature $0$) answers given the retrieved chunks.
+The same model family serves as the RAGAS judge.
+
+\section{Method}\label{sec:method}
+
+\subsection{Dataset}\label{sec:dataset}
+
+We sampled 100 query/response/context triples deterministically (seed 42,
+at most 5 per session) from the session store. Queries are user messages of
+15--1500 characters; references are the historical assistant replies;
+retrieved contexts are the top-5 chunks for the query; responses are fresh
+generations conditioned on those chunks. After filtering invalid judge
+outputs, \textbf{99} samples were joined across all analyses.
+
+\subsection{Reference (judge) metrics}\label{sec:ragas}
+
+We use the classic RAGAS metric classes~\cite{es2023ragas}: Faithfulness,
+AnswerRelevancy, ContextPrecision, and AnswerCorrectness, run with a fully
+local judge (\texttt{gemma4:12b} via Ollama) and \texttt{nomic-embed-text}
+embeddings, single worker, on the GPU. The full pass took 8~h~26~min for the
+400 samples (4 metrics $\times$ 100).
+
+\subsection{Shortcut metrics}\label{sec:shortcuts}
+
+All shortcuts are deterministic and run locally:
+
+\begin{itemize}[nosep]
+  \item \textbf{ContextPrecision} $\rightarrow$ graded NDCG. A binary
+  threshold variant collapses (about 89\% of chunks are lexically relevant),
+  so relevance is graded: $\sigma(\mathrm{cross{\text{-}}encoder}(reference,
+  chunk))$, and the metric is NDCG over graded relevance under the
+  query-vs-chunk reranker order (retrieved and reranked variants; bge-reranker
+  v2-m3 and ms-marco-MiniLM).
+  \item \textbf{Faithfulness} $\rightarrow$ sentence-level NLI. Sentences of
+  the response are split; each is entailed if
+  $\max_c P_{\mathrm{entail}}(c,s) \ge 0.5$ (DeBERTa-v3 MNLI);
+  score $=$ entailed $/$ total.
+  \item \textbf{AnswerRelevancy} $\rightarrow$ asymmetric QA embeddings.
+  TAS-B dot product, and nomic cosine with
+  \texttt{search\_query:}/\texttt{search\_document:} prefixes.
+  \item \textbf{AnswerCorrectness} $\rightarrow$
+  $\mathrm{score} = 0.75\,\mathrm{ROUGE\text{-}L\,F_1}(\mathrm{response},
+  \mathrm{reference}) + 0.25\cos(\mathbf{r},\mathbf{ref})$ with
+  \texttt{nomic-embed-text}.
+\end{itemize}
+
+\subsection{Agreement analysis}\label{sec:agreement}
+
+For each metric pair we compute Pearson and Spearman correlation over the 99
+joined samples. Verdict bands: $|\rho|\ge 0.7$ STRONG, $0.4\le|\rho|<0.7$
+MODERATE, $|\rho|<0.4$ WEAK. Spearman is primary because TAS-B is on an
+unbounded scale.
+
+\section{Results}\label{sec:results}
+
+Table~\ref{tab:correlations} summarizes the agreement. Full tables and figures
+are in the accompanying repository.
+
+\begin{table}[ht]
+  \centering
+  \caption{Agreement between RAGAS judge metrics and deterministic shortcuts
+  over 99 joined samples.}
+  \label{tab:correlations}
+  \begin{tabular}{lrrl}
+    \toprule
+    RAGAS metric & Shortcut & $\rho$ (Spearman) & Verdict \\
+    \midrule
+    AnswerCorrectness & combined & $0.894$ & STRONG \\
+    AnswerCorrectness & ROUGE-L only & $0.870$ & STRONG \\
+    AnswerCorrectness & nomic only & $0.875$ & STRONG \\
+    AnswerRelevancy & nomic cosine & $0.709$ & STRONG \\
+    AnswerRelevancy & TAS-B dot & $0.576$ & MODERATE \\
+    Faithfulness & sentence NLI & $-0.185$ & WEAK \\
+    ContextPrecision & bge (retrieved) & $-0.124$ & WEAK \\
+    ContextPrecision & bge (reranked) & $-0.044$ & WEAK \\
+    ContextPrecision & MiniLM & $-0.018$ & WEAK \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{AnswerCorrectness is replaceable}\label{sec:ac}
+
+The blend $0.75\,\mathrm{ROUGE\text{-}L} + 0.25\cos$ reproduces the judge's
+ranking almost perfectly ($\rho=0.894$); each component alone is nearly as
+good ($0.870$, $0.875$). For ranking and regression gating, any variant
+suffices; the judge adds value only where absolute calibration matters.
+
+\subsection{AnswerRelevancy: embedding family matters}\label{sec:ar}
+
+The shortcut built from the retrieval index's own embedding family
+(\texttt{nomic-embed-text}) with task prefixes agrees STRONGLY
+($\rho=0.709$). The fine-tuned TAS-B encoder is MODERATE ($\rho=0.576$) and
+numerically saturated.
+
+\subsection{Faithfulness: the judge saturates}\label{sec:ff}
+
+The judge's median is 1.000 (everything is faithful) while the NLI shortcut's
+median is 0.000 (nothing is entailed by the retrieved chunks). With a
+bimodal, near-degenerate judge, the correlation ($\rho=-0.185$) is driven by a
+few low-score outliers. Both measurements are plausible; neither can be
+trusted without a human oracle audit of 20--30 sentence-level entailment
+decisions.
+
+\subsection{ContextPrecision: no signal on this corpus}\label{sec:cp}
+
+All variants are near-constant (bge NDCG mean $\approx 0.99$, std $\approx
+0.01$; RAGAS median 0.70). Every retrieved chunk is relevant on this corpus,
+so the metric cannot rank systems. This is a corpus degeneracy, not a general
+failure of the metric.
+
+\section{Discussion}\label{sec:discussion}
+
+\paragraph{Cheap wins for ranking.} Two of the four judge metrics are reliably
+predicted by deterministic shortcuts that run in minutes rather than hours.
+This enables CI gating on the shortcut with periodic judge-based calibration.
+
+\paragraph{Disagreement is a diagnostic.} A near-zero correlation identifies
+either a judge artifact (faithfulness ceiling) or a corpus artifact
+(context precision degeneracy). Both findings are actionable and are surfaced
+at the cost of one short computation.
+
+\paragraph{Threats to validity.} A single judge and generator (both
+\texttt{gemma4:12b}) may inflate agreement relative to a frontier judge; the
+TAS-B scale limits inference to rank statistics; and the corpus has a ceiling
+on context relevance that may not generalize to other domains.
+
+\section{Conclusion}\label{sec:conclusion}
+
+On this real agentic-RAG corpus, AnswerCorrectness and AnswerRelevancy can be
+evaluated cheaply and deterministically; Faithfulness is currently undecidable
+without an oracle audit; and ContextPrecision carries no discriminative power.
+The shortcut-versus-judge agreement check is cheap enough to run before
+adopting any RAG metric on a new corpus.
+
+\begin{thebibliography}{9}
+  \bibitem{es2023ragas}
+  Es, S., James, J., Espinosa-Anke, L., \& Schockaert, S. (2023).
+  \emph{RAGAS: Automated Evaluation of Retrieval Augmented Generation}.
+  EACL 2023 Findings; arXiv:2309.15217.
+
+  \bibitem{lin2004rouge}
+  Lin, C.-Y. (2004).
+  \emph{ROUGE: A Package for Automatic Evaluation of Summaries}.
+  ACL Text Summarization Branches Out.
+
+  \bibitem{hofstaetter2021tasb}
+  Hofstätter, S., Althammer, S., Schröder, M., Sertkan, M., \& Hanbury, A.
+  (2021).
+  \emph{Efficiently Teaching an Effective Dense Retriever with Balanced Topic
+  Aware Sampling}. SIGIR 2021.
+
+  \bibitem{jarvelin2002ndcg}
+  Järvelin, K., \& Kekäläinen, J. (2002).
+  \emph{Cumulated Gain-Based Evaluation of IR Techniques}.
+  ACM TOIS 20(4).
+
+  \bibitem{zheng2023llmjudge}
+  Zheng, L., et al. (2023).
+  \emph{Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena}.
+  NeurIPS 2023.
+
+  \bibitem{baai2023bge}
+  BAAI (2023).
+  \emph{bge-reranker-v2-m3: A multi-lingual cross-encoder reranker}.
+  Hugging Face model hub.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Artifacts (never commit conversation content)
+dataset.json
+sampled_questions.json
+query_embeddings.json
+results/results-*.json
+comparison.json
+comparison_report.md
+shortcut_scores.json
+nohup.out
+*.log
+
+# LaTeX
+*.aux
+*.log
+*.out
+/arxiv_paper.pdf
+
+# OS/editor
+.DS_Store
+.idea/
+*.swp

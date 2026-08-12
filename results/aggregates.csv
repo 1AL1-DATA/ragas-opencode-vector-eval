@@ -1,0 +1,10 @@
+metric,label,ragas_mean,ragas_median,ragas_std,shortcut_mean,shortcut_median,shortcut_std,mean_abs_delta,verdict
+faithfulness,Faithfulness (NLI),0.7702,1.0000,0.3978,0.3005,0.0000,0.4246,0.6612,WEAK
+answer_relevancy,AnswerRelevancy (TAS-B),0.5193,0.6310,0.3180,97.9527,97.6728,11.5221,97.4334,MODERATE
+answer_relevancy_nomic,AnswerRelevancy (nomic),0.5193,0.6310,0.3180,0.7102,0.7549,0.1470,0.2103,STRONG
+context_precision,ContextPrecision (bge),0.6332,0.7000,0.3833,0.9899,0.9955,0.0133,0.3630,WEAK
+context_precision_reranked,ContextPrecision (bge reranked),0.6332,0.7000,0.3833,0.9911,0.9962,0.0129,0.3639,WEAK
+context_precision_minilm,ContextPrecision (MiniLM),0.6332,0.7000,0.3833,0.7527,0.7223,0.1793,0.3374,WEAK
+answer_correctness,AnswerCorrectness (combined),0.3296,0.2215,0.2489,0.2906,0.2390,0.1660,0.1067,STRONG
+answer_correctness_rouge,AnswerCorrectness (ROUGE),0.3296,0.2215,0.2489,0.1463,0.0763,0.1839,0.1899,STRONG
+answer_correctness_sem,AnswerCorrectness (nomic),0.3296,0.2215,0.2489,0.7233,0.7385,0.1428,0.3988,STRONG

@@ -1,0 +1,26 @@
+# Core scientific stack
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+
+# Visualisation
+matplotlib>=3.7
+
+# RAGAS evaluation (local judge)
+ragas>=0.4.0
+langchain-ollama>=0.2.0
+
+# Shortcut inference
+torch>=2.0
+transformers>=4.40
+sentence-transformers>=3.0
+sentencepiece>=0.2
+
+# Vector store client
+chromadb>=0.5
+
+# Testing
+pytest>=7.4
+
+# Notebooks (optional)
+jupyter>=1.0

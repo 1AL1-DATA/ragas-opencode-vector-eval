@@ -1,0 +1,65 @@
+cff-version: 1.2.0
+message: |
+  If you use this work in a research paper, blog post, or product, please cite it
+  as below. The BibTeX entry below is the canonical citation.
+type: software
+title: "Cheap Deterministic Shortcuts vs. LLM-as-a-Judge Metrics for RAG evaluation"
+abstract: >-
+  Agreement study between the four classic RAGAS LLM-judge metrics and cheap,
+  deterministic shortcuts (embeddings, cross-encoders, NLI, ROUGE-L) on the
+  session store of an agentic coding tool mirrored into a local vector database.
+authors:
+  - family-names: Lazaridis
+    given-names: Alkiviadis
+    alias: Adi
+version: 0.1.0
+date-released: 2026-08-12
+license:
+  - id: MIT
+    url: "https://opensource.org/licenses/MIT"
+    title: "MIT License (code)"
+  - id: CC-BY-4.0
+    url: "https://creativecommons.org/licenses/by/4.0/"
+    title: "Creative Commons Attribution 4.0 International (prose, figures)"
+keywords:
+  - RAG
+  - retrieval-augmented-generation
+  - RAGAS
+  - llm-as-a-judge
+  - evaluation
+  - vector-database
+  - embeddings
+  - agentic
+  - reproducible-research
+references:
+  - type: article
+    title: "RAGAS: Automated Evaluation of Retrieval Augmented Generation"
+    authors:
+      - family-names: Es
+        given-names: Shahul
+      - family-names: James
+        given-names: Jithin
+      - family-names: Espinosa-Anke
+        given-names: Luis
+      - family-names: Schockaert
+        given-names: Steven
+    year: 2023
+    url: "https://arxiv.org/abs/2309.15217"
+  - type: article
+    title: "ROUGE: A Package for Automatic Evaluation of Summaries"
+    authors:
+      - family-names: Lin
+        given-names: Chin-Yew
+    journal: "Text Summarization Branches Out, ACL"
+    year: 2004
+  - type: article
+    title: "Cumulated Gain-Based Evaluation of IR Techniques"
+    authors:
+      - family-names: Järvelin
+        given-names: Kalervo
+      - family-names: Kekäläinen
+        given-names: Jaana
+    journal: "ACM TOIS"
+    volume: "20"
+    issue: "4"
+    year: 2002
